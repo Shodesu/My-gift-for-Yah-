@@ -90,7 +90,14 @@
         }
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .kitty-button.pressed { transform: translateY(8px) scale(0.95); box-shadow: 0 2px 0 #f0f0f0; animation: none; }
+        
+        /* The pressed state now looks slightly more "squished" when on cooldown */
+        .kitty-button.pressed { 
+            transform: translateY(8px) scale(0.95); 
+            box-shadow: 0 2px 0 #f0f0f0; 
+            animation: none;
+            background-color: #fff9fb; 
+        }
 
         .bow { position: absolute; top: 5px; right: 15px; width: 45px; height: 30px; background: #ff0044; border-radius: 10px; transform: rotate(20deg); z-index: 2; }
         .bow::after { content: ''; position: absolute; top: 8px; left: 15px; width: 12px; height: 12px; background: #cc0036; border-radius: 50%; }
@@ -153,6 +160,7 @@
     <script>
         let count = 0;
         let isMuted = false;
+        let isWaiting = false; // New flag for the cooldown
         const scoreDisplay = document.getElementById('score');
         const clicker = document.getElementById('clicker');
         const overlay = document.getElementById('overlay');
@@ -164,16 +172,9 @@
         bgMusic.volume = 0.4;
         clickSound.volume = 0.5;
 
-        // FIXED FOR MOBILE: Unlock audio AND vibration via this function
         function initGame() {
-            // Unlock Audio
             bgMusic.play().catch(err => console.log("Audio waiting for interaction"));
-            
-            // Unlock Vibration (Android requirement)
-            if (navigator.vibrate) {
-                navigator.vibrate(10); // A tiny pulse to "bless" the permission
-            }
-
+            if (navigator.vibrate) navigator.vibrate(10);
             document.getElementById('start-screen').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('start-screen').style.display = 'none';
@@ -200,16 +201,25 @@
         function handleAction(e) {
             if(e) e.preventDefault(); 
             
+            // IF ALREADY WAITING, DO NOTHING
+            if (isWaiting) return;
+
+            isWaiting = true; // Start the downtime
+            
             clickSound.currentTime = 0; 
             clickSound.play().catch(()=>{});
 
-            // The main click vibration
             if (navigator.vibrate) {
                 navigator.vibrate(20); 
             }
 
             clicker.classList.add('pressed');
-            setTimeout(() => clicker.classList.remove('pressed'), 100);
+
+            // END DOWNTIME AFTER 300ms (.3 seconds)
+            setTimeout(() => {
+                clicker.classList.remove('pressed');
+                isWaiting = false;
+            }, 300);
 
             count++;
             scoreDisplay.innerText = count;
