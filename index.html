@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>For My Bestie 🎀</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
             background-color: #ffeaf2;
             background-image: radial-gradient(#ffdae9 2px, transparent 2px);
             background-size: 30px 30px;
-            font-family: 'Comic Sans MS', 'cursive', sans-serif;
+            font-family: 'Quicksand', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -21,7 +23,44 @@
             -webkit-user-select: none;
         }
 
-        /* --- START SCREEN OVERLAY --- */
+        /* --- PROGRESS BAR --- */
+        .progress-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            max-width: 300px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #ffb3d1;
+            z-index: 10;
+        }
+
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff80ab, #ff4d94);
+            transition: width 0.3s ease;
+        }
+
+        /* --- FLOATING HEARTS --- */
+        .heart-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            font-size: 20px;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(20deg) scale(1.5); opacity: 0; }
+        }
+
+        /* --- START SCREEN --- */
         #start-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -42,6 +81,7 @@
             border-radius: 50px;
             font-size: 1.5rem;
             font-family: inherit;
+            font-weight: 700;
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(255, 77, 148, 0.3);
             animation: pulse 2s infinite;
@@ -53,29 +93,34 @@
             100% { transform: scale(1); }
         }
 
-        /* --- MUSIC CONTROLS --- */
-        .mute-btn {
+        .top-controls {
             position: absolute;
-            top: 20px;
+            top: 50px;
             right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .circle-btn {
             background: white;
             border: 2px solid #ffb3d1;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             cursor: pointer;
-            z-index: 10;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
         /* --- GAME STYLES --- */
         .game-container { text-align: center; z-index: 1; width: 100%; }
-        .title { color: #ff4d94; text-shadow: 2px 2px #fff; margin-bottom: 10px; font-size: 1.8rem; }
+        .title { color: #ff4d94; text-shadow: 2px 2px #fff; margin-bottom: 10px; font-size: 1.8rem; font-weight: 700; }
         .counter-container {
-            font-size: 2rem; color: #ff4d94; margin-bottom: 30px; font-weight: bold;
+            font-size: 2rem; color: #ff4d94; margin-bottom: 30px; font-weight: 700;
             background: white; padding: 10px 25px; border-radius: 50px;
             display: inline-block; box-shadow: 0 5px 15px rgba(255, 77, 148, 0.2);
         }
@@ -91,7 +136,6 @@
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         
-        /* The pressed state now looks slightly more "squished" when on cooldown */
         .kitty-button.pressed { 
             transform: translateY(8px) scale(0.95); 
             box-shadow: 0 2px 0 #f0f0f0; 
@@ -105,21 +149,61 @@
         .left { left: 40px; } .right { right: 40px; }
         .nose { position: absolute; top: 85px; left: 50%; transform: translateX(-50%); width: 12px; height: 8px; background: #ffdb58; border-radius: 50%; }
 
-        #overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 182, 193, 0.95); display: flex;
-            justify-content: center; align-items: center; z-index: 100;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        /* --- LOG BUTTON --- */
+        .log-trigger {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 2px solid #ffb3d1;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: #ff4d94;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 10px rgba(255, 77, 148, 0.2);
+            z-index: 10;
         }
-        #overlay.show { opacity: 1; pointer-events: auto; }
+
+        /* --- MODALS --- */
+        #overlay, #log-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 182, 193, 0.95); display: none;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        
         .modal {
             background: white; padding: 25px; border-radius: 25px; border: 5px solid #ff4d94;
-            width: 80%; max-width: 320px; text-align: center; display: flex; flex-direction: column;
+            width: 85%; max-width: 350px; text-align: center; 
+            display: flex; flex-direction: column;
+            max-height: 80vh; 
         }
-        .message-content { font-size: 1.1rem; line-height: 1.5; color: #444; margin-bottom: 20px; overflow-y: auto; }
-        .close-btn { background: #ff4d94; color: white; border: none; padding: 15px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+
+        .message-content { 
+            font-size: 1.05rem; line-height: 1.6; color: #444; 
+            margin-bottom: 20px; overflow-y: auto; font-weight: 500;
+            text-align: left; padding-right: 10px; white-space: pre-wrap;
+        }
+
+        .log-item {
+            border-bottom: 1px dashed #ffb3d1;
+            padding: 15px 0;
+        }
+        .log-item:last-child { border: none; }
+        .log-tag { font-weight: 700; color: #ff4d94; font-size: 0.8rem; display: block; margin-bottom: 5px; }
+
+        .message-content::-webkit-scrollbar { width: 6px; }
+        .message-content::-webkit-scrollbar-thumb { background: #ffb3d1; border-radius: 10px; }
+
+        .close-btn { 
+            background: #ff4d94; color: white; border: none; padding: 15px 20px; 
+            border-radius: 20px; font-weight: 700; cursor: pointer; 
+            font-family: inherit; flex-shrink: 0;
+        }
         .close-btn:disabled { background: #ddd; color: #888; }
-        .hint { color: #ff80ab; margin-top: 20px; font-size: 0.85rem; padding: 0 20px; }
+        .hint { color: #ff80ab; margin-top: 20px; font-size: 0.85rem; padding: 0 20px; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -129,14 +213,20 @@
         <button class="start-button" onclick="initGame()">Click to Open 🎵</button>
     </div>
 
+    <div class="progress-container">
+        <div id="progress-fill"></div>
+    </div>
+
+    <div class="top-controls">
+        <button class="circle-btn" onclick="toggleMute()">🔊</button>
+    </div>
+
     <audio id="bg-music" loop>
         <source src="lofi.mp3.mp3" type="audio/mpeg">
     </audio>
     <audio id="click-sound">
         <source src="tap.mp3" type="audio/mpeg">
     </audio>
-
-    <button class="mute-btn" onclick="toggleMute()">🔊</button>
 
     <div class="game-container">
         <h1 class="title">Hello Bestie! 🎀</h1>
@@ -150,34 +240,112 @@
         <p class="hint">Tap Kitty to see my messages for you...</p>
     </div>
 
+    <button class="log-trigger" onclick="openLog()">📖 Our Memories</button>
+
     <div id="overlay">
         <div class="modal">
-            <div class="message-content"><p id="message-text"></p></div>
+            <div class="message-content" id="scroll-area">
+                <p id="message-text"></p>
+            </div>
             <button id="close-btn" class="close-btn" onclick="closeModal()" disabled>Wait... (2s)</button>
         </div>
     </div>
 
+    <div id="log-overlay">
+        <div class="modal">
+            <h2 style="color:#ff4d94; margin-top:0;">Unlocked Notes</h2>
+            <div class="message-content" id="log-content">
+                <p style="text-align:center; color:#999;">Click the Kitty to unlock messages!</p>
+            </div>
+            <button class="close-btn" onclick="closeLog()">Close</button>
+        </div>
+    </div>
+
     <script>
-        let count = 0;
+        // Load progress from LocalStorage or start fresh
+        let count = parseInt(localStorage.getItem('bestieClicks')) || 0;
+        let unlockedNotes = JSON.parse(localStorage.getItem('unlockedMemories')) || [];
+        
         let isMuted = false;
-        let isWaiting = false; // New flag for the cooldown
+        let isWaiting = false;
+
         const scoreDisplay = document.getElementById('score');
         const clicker = document.getElementById('clicker');
         const overlay = document.getElementById('overlay');
+        const logOverlay = document.getElementById('log-overlay');
         const messageText = document.getElementById('message-text');
+        const logContent = document.getElementById('log-content');
+        const scrollArea = document.getElementById('scroll-area');
         const closeBtn = document.getElementById('close-btn');
         const bgMusic = document.getElementById('bg-music');
         const clickSound = document.getElementById('click-sound');
+        const progressBar = document.getElementById('progress-fill');
 
         bgMusic.volume = 0.4;
         clickSound.volume = 0.5;
+        scoreDisplay.innerText = count;
+
+        const milestones = [100, 200, 300, 400, 500, 600, 800, 1000];
+         const notes = {
+            100: "Heeeeyy! Hahahaha sooo you are playing the game already....uhhh what can u say about it? Is it fun? U see I originally wanted to create a ragebait game for you as a gift...like u will click it but then it will suddenly restart...or something like that...hwhaahaha...not funny right? I wanted to level things up...instead of just giving you something...i decided to create something for you instead...i wanted to show you how much I appreciate, love your presense...and everything about you...i thought that maybe...if i exert tons of effort in creating this...i would be able to show you how much you mean to me...but then again...i dont think a game can express everything i feel for you...but still...i hope you like it! 💖",
+            200: "200?! Wow, you're really going at it! Just like in our friendship, every click brings us closer. Thank you for being such an amazing part of my life! But hey, I really miss our relentless banter sessions, our early night talks (about some random stuffs), but it seems like you are really really really busy nowadays, and well...Really I just miss you....I hope we can find time to catch up soon, okay?",
+            300: "I don't usually say this to you...but u see when we play ml or games together...I really enjoy those moments...even tho we dont really win that much hahahaha...but still...those times are really special to me...I cherish those times a lot...I hope we can have more of those moments again...just you and me, having fun and goofing around like we always do!...oh....I also realized something...I usually blame someone when we lose right? Not admitting the mistakes that i did...actually its my way of, u know keeping the conversation alive (i am afraid...that if i dont do that...everything would just..stop)...its my way of goofing around...but really...im sorry if i sometimes go overboard with it...i just want to keep the conversation alive...I really enjoyed those games...win or lose...its really fun playing with you...💖",
+            400: "Bae, You have the most beautiful eyes I've ever seen. Every time I look into them, I see a world filled with kindness, warmth, and endless love. Thank you for being the light in my life. 🌟😍",
+            500: "You're more than a friend; you're my safe space. Thank you for always listening and being YOU. 🏠💕",
+            600: "600 clicks! woooooot?!....you are finishing the game?!....wow....since you reached this far...I just want to say...thank you...thank you for being in my life...thank you for being my sun...thank you for accepting me as I am...flaws and all...thank you for all the memories we shared together...the laughs, the cries, the late night talks, the games we played together, the random texts we sent to each other just to make each other smile...thank you for being you...I really really appreciate you a lot...more than you know...I hope our friendship will last forever...no matter what happens...I will always be here for you...cheering you on from the sidelines...supporting you in everything you do....💖🎀 but don't stop now!...you are almost there!",
+            800: "Moon\n\nIn the quiet dark, you are the silver light,\nA gentle glow that guides me through the night.\nWith every smile, the shadows fade away,\nAnd keep the heavy clouds of doubt at bay.\n\nYou are the steady rhythm in my chest,\nThe peaceful shore where I can finally rest.\nWithin your grace, I find my rightful place,\nReflected in the kindness of your face.\n\nI cherish every phase and every spark,\nThe way you heal the lonely and the dark.\nTo hold your heart is all I’ll ever need,\nA love that planted hope and sowed the seed.\n\nLike the moon that pulls the rising tide,\nI feel a home when you are by my side.\nThe world is vast, but in your soft embrace,\nI’ve finally found my own familiar space.",
+            1000: "1000 CLICKS! theee end...or so you thought hahahaha...just kidding!....wow...you really did it...I am so proud of you!....you really made it to the end of the game...I hope you liked it!....I really put a lot of effort into making this game for you...just to show you how much you mean to me...how much I appreciate your presence...and everything about you...I hope this game made you smile...made your heart flutter a bit...made you feel special...because you really are special to me...more than you know...I hope we can continue to make more memories together...more laughs, more talks, more games, more everything!...thank you for being in my life...I really really appreciate you a lot...💖🎀....this is not the end of our story...its just the beginning of a new chapter...let's continue to write our story together...okay?....love you baee!....always and forever!...ohhh send me an image of dog a cute one of course....and something might happen...(this is not the end)"
+        };
+
+        function shootConfetti() {
+            const end = Date.now() + (4 * 1000);
+            const colors = ['#ff4d94', '#ff80ab', '#ffffff', '#ffb3d1'];
+
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: colors
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: colors
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        function createHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = ['💖', '💗', '💓', '💕', '🎀'][Math.floor(Math.random() * 5)];
+            heart.style.left = (x || window.innerWidth/2) + 'px';
+            heart.style.top = (y || window.innerHeight/2) + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+        }
+
+        function updateProgress() {
+            let nextMilestone = milestones.find(m => m > count) || 1000;
+            let prevMilestone = milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+            let progress = ((count - prevMilestone) / (nextMilestone - prevMilestone)) * 100;
+            progressBar.style.width = progress + "%";
+        }
 
         function initGame() {
-            bgMusic.play().catch(err => console.log("Audio waiting for interaction"));
-            if (navigator.vibrate) navigator.vibrate(10);
+            bgMusic.play().catch(e => console.log("Audio waiting"));
             document.getElementById('start-screen').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('start-screen').style.display = 'none';
+                updateProgress(); // Set initial bar state
             }, 500);
         }
 
@@ -185,37 +353,22 @@
             isMuted = !isMuted;
             bgMusic.muted = isMuted;
             clickSound.muted = isMuted;
-            document.querySelector('.mute-btn').innerText = isMuted ? "🔇" : "🔊";
+            document.querySelector('.circle-btn').innerText = isMuted ? "🔇" : "🔊";
         }
-
-        const notes = {
-            100: "Each click is a reminder of the day we met. My life got 10x better the moment you became my bestie! 🎀",
-            200: "I'm sitting here missing your energy. No one makes me laugh as hard as you do. Come back soon! 🌸",
-            300: "300 clicks! Just like this game, you've changed my world piece by piece. I'm so lucky to have you. ✨",
-            400: "Sometimes I look at my phone and wish you were right next to me. I miss our random adventures so much! 💖",
-            500: "You're more than a friend; you're my safe space. Thank you for always listening and being YOU. 🏠💕",
-            600: "600 clicks! Just like this number, my appreciation for you keeps growing. You're truly one of a kind! 🌟",
-            1000: "1000 CLICKS! You've officially reached the end, but my love for you has no limit. You've changed my life forever, bestie! 🍎🎀"
-        };
 
         function handleAction(e) {
             if(e) e.preventDefault(); 
-            
-            // IF ALREADY WAITING, DO NOTHING
             if (isWaiting) return;
+            isWaiting = true;
 
-            isWaiting = true; // Start the downtime
-            
+            const touch = e.touches ? e.touches[0] : e;
+            createHeart(touch.clientX, touch.clientY);
+
             clickSound.currentTime = 0; 
             clickSound.play().catch(()=>{});
-
-            if (navigator.vibrate) {
-                navigator.vibrate(20); 
-            }
+            if (navigator.vibrate) navigator.vibrate(20);
 
             clicker.classList.add('pressed');
-
-            // END DOWNTIME AFTER 300ms (.3 seconds)
             setTimeout(() => {
                 clicker.classList.remove('pressed');
                 isWaiting = false;
@@ -223,42 +376,62 @@
 
             count++;
             scoreDisplay.innerText = count;
+            
+            // Save state
+            localStorage.setItem('bestieClicks', count);
+            
+            updateProgress();
 
             if (notes[count]) {
+                if (!unlockedNotes.some(n => n.count === count)) {
+                    unlockedNotes.push({count: count, text: notes[count]});
+                    localStorage.setItem('unlockedMemories', JSON.stringify(unlockedNotes));
+                }
+                if(count === 1000) shootConfetti();
                 showPopUp(notes[count]);
             }
         }
 
-        clicker.addEventListener('touchstart', handleAction, {passive: false});
-        clicker.addEventListener('mousedown', (e) => {
-            if (!('ontouchstart' in window)) {
-                handleAction(e);
-            }
-        });
-
         function showPopUp(text) {
             messageText.innerText = text;
-            overlay.classList.add('show');
+            overlay.style.display = 'flex';
+            scrollArea.scrollTop = 0; 
             let timeLeft = 2;
             closeBtn.disabled = true;
             closeBtn.innerText = `Wait... (${timeLeft}s)`;
             const timer = setInterval(() => {
                 timeLeft--;
-                if (timeLeft > 0) {
-                    closeBtn.innerText = `Wait... (${timeLeft}s)`;
-                } else {
+                if (timeLeft > 0) closeBtn.innerText = `Wait... (${timeLeft}s)`;
+                else {
                     clearInterval(timer);
                     closeBtn.disabled = false;
-                    closeBtn.innerText = "Keep Clicking! 💖";
+                    closeBtn.innerText = count >= 1000 ? "Love You! 🎀" : "Keep Clicking! 💖";
                 }
             }, 1000);
         }
 
-        function closeModal() {
-            if (!closeBtn.disabled) {
-                overlay.classList.remove('show');
+        function closeModal() { overlay.style.display = 'none'; }
+
+        function openLog() {
+            logOverlay.style.display = 'flex';
+            if (unlockedNotes.length === 0) {
+                logContent.innerHTML = '<p style="text-align:center; color:#999;">No memories unlocked yet. Keep tapping!</p>';
+            } else {
+                logContent.innerHTML = unlockedNotes.map(n => `
+                    <div class="log-item">
+                        <span class="log-tag">Unlocked at ${n.count} clicks</span>
+                        ${n.text}
+                    </div>
+                `).join('');
             }
         }
+
+        function closeLog() { logOverlay.style.display = 'none'; }
+
+        clicker.addEventListener('touchstart', handleAction, {passive: false});
+        clicker.addEventListener('mousedown', (e) => {
+            if (!('ontouchstart' in window)) handleAction(e);
+        });
     </script>
 </body>
 </html>
