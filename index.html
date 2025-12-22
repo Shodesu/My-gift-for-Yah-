@@ -164,9 +164,16 @@
         bgMusic.volume = 0.4;
         clickSound.volume = 0.5;
 
-        // REQUIRED FOR MOBILE: Unlock audio via this function
+        // FIXED FOR MOBILE: Unlock audio AND vibration via this function
         function initGame() {
+            // Unlock Audio
             bgMusic.play().catch(err => console.log("Audio waiting for interaction"));
+            
+            // Unlock Vibration (Android requirement)
+            if (navigator.vibrate) {
+                navigator.vibrate(10); // A tiny pulse to "bless" the permission
+            }
+
             document.getElementById('start-screen').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('start-screen').style.display = 'none';
@@ -196,8 +203,9 @@
             clickSound.currentTime = 0; 
             clickSound.play().catch(()=>{});
 
+            // The main click vibration
             if (navigator.vibrate) {
-                navigator.vibrate(20);
+                navigator.vibrate(20); 
             }
 
             clicker.classList.add('pressed');
