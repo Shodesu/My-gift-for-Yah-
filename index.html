@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>For My Bestie 🎀</title>
     <style>
-        /* CSS STYLES */
         body {
             background-color: #ffeaf2;
             background-image: radial-gradient(#ffdae9 2px, transparent 2px);
@@ -17,9 +16,7 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
-            /* Prevents pull-to-refresh on mobile Chrome */
             overscroll-behavior-y: contain; 
-            /* Prevents text selection while tapping fast */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -49,7 +46,6 @@
             box-shadow: 0 5px 15px rgba(255, 77, 148, 0.2);
         }
 
-        /* 3D-ish Kitty Clicker - Sized for Mobile */
         .kitty-button {
             width: 160px;
             height: 125px;
@@ -62,7 +58,6 @@
             transition: transform 0.05s, box-shadow 0.05s;
             border: 4px solid #ffb3d1;
             animation: float 3s ease-in-out infinite;
-            /* Prevents gray tap highlight on mobile */
             -webkit-tap-highlight-color: transparent; 
         }
 
@@ -71,14 +66,12 @@
             50% { transform: translateY(-10px); }
         }
 
-        /* When pressed */
         .kitty-button.pressed {
             transform: translateY(8px) scale(0.95);
             box-shadow: 0 2px 0 #f0f0f0;
             animation: none;
         }
 
-        /* Kitty Face Features */
         .bow {
             position: absolute;
             top: 5px; right: 15px;
@@ -116,7 +109,6 @@
             border-radius: 50%;
         }
 
-        /* Modal / Pop-up */
         #overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -161,11 +153,9 @@
             overflow-y: auto;
             padding-right: 5px;
             max-height: 200px;
-            /* Smooth scrolling for iOS */
             -webkit-overflow-scrolling: touch; 
         }
 
-        /* Custom Scrollbar */
         .message-content::-webkit-scrollbar { width: 5px; }
         .message-content::-webkit-scrollbar-thumb { background: #ffb3d1; border-radius: 10px; }
 
@@ -196,6 +186,13 @@
 </head>
 <body>
 
+    <audio id="bg-music" loop>
+        <source src="lofi.mp3.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="click-sound">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="game-container">
         <h1 class="title">Hello Bestie! 🎀</h1>
         <div class="counter-container">
@@ -223,27 +220,45 @@
 
     <script>
         let count = 0;
+        let audioStarted = false;
         const scoreDisplay = document.getElementById('score');
         const clicker = document.getElementById('clicker');
         const overlay = document.getElementById('overlay');
         const messageText = document.getElementById('message-text');
         const closeBtn = document.getElementById('close-btn');
+        
+        const bgMusic = document.getElementById('bg-music');
+        const clickSound = document.getElementById('click-sound');
+
+        bgMusic.volume = 0.4;
+        clickSound.volume = 0.5;
 
         const notes = {
             100: "Each click is a reminder of the day we met. My life got 10x better the moment you became my bestie! 🎀",
             200: "I'm sitting here missing your energy. No one makes me laugh as hard as you do. Come back soon! 🌸",
-            300: "100 clicks! Just like this game, you've changed my world piece by piece. I'm so lucky to have you. ✨",
+            300: "300 clicks! Just like this game, you've changed my world piece by piece. I'm so lucky to have you. ✨",
             400: "Sometimes I look at my phone and wish you were right next to me. I miss our random adventures so much! 💖",
             500: "You're more than a friend; you're my safe space. Thank you for always listening and being YOU. 🏠💕",
-            600: "400 clicks! Just like this number, my appreciation for you keeps growing. You're truly one of a kind! 🌟",
-            1000: "500 CLICKS! You've officially reached the end, but my love for you has no limit. You've changed my life forever, bestie! 🍎🎀"
+            600: "600 clicks! Just like this number, my appreciation for you keeps growing. You're truly one of a kind! 🌟",
+            1000: "1000 CLICKS! You've officially reached the end, but my love for you has no limit. You've changed my life forever, bestie! 🍎🎀"
         };
 
-        // Function to handle the actual "Click" logic
         function handleAction(e) {
-            e.preventDefault(); // Prevents ghost clicks and zooming
+            e.preventDefault(); 
             
-            // Add visual "pressed" effect
+            if (!audioStarted) {
+                bgMusic.play();
+                audioStarted = true;
+            }
+
+            clickSound.currentTime = 0; 
+            clickSound.play();
+
+            // Vibrate for 20ms - a slightly firmer click feel
+            if (navigator.vibrate) {
+                navigator.vibrate(20);
+            }
+
             clicker.classList.add('pressed');
             setTimeout(() => clicker.classList.remove('pressed'), 100);
 
@@ -255,7 +270,6 @@
             }
         }
 
-        // Use touchstart for faster response on phones, click as fallback
         clicker.addEventListener('touchstart', handleAction, {passive: false});
         clicker.addEventListener('mousedown', (e) => {
             if (e.type === 'mousedown' && !('ontouchstart' in window)) {
