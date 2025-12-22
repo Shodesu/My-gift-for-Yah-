@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For My Bestie 🎀</title>
+    <style>
+        /* CSS STYLES */
+        body {
+            background-color: #ffeaf2;
+            background-image: radial-gradient(#ffdae9 2px, transparent 2px);
+            background-size: 30px 30px;
+            font-family: 'Comic Sans MS', 'cursive', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            /* Prevents pull-to-refresh on mobile Chrome */
+            overscroll-behavior-y: contain; 
+            /* Prevents text selection while tapping fast */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .game-container {
+            text-align: center;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .title { 
+            color: #ff4d94; 
+            text-shadow: 2px 2px #fff;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .counter-container {
+            font-size: 2rem;
+            color: #ff4d94;
+            margin-bottom: 30px;
+            font-weight: bold;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(255, 77, 148, 0.2);
+        }
+
+        /* 3D-ish Kitty Clicker - Sized for Mobile */
+        .kitty-button {
+            width: 160px;
+            height: 125px;
+            background: white;
+            border-radius: 50% 50% 45% 45%;
+            margin: 0 auto;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 10px 0 #f0f0f0, 0 15px 20px rgba(0,0,0,0.1);
+            transition: transform 0.05s, box-shadow 0.05s;
+            border: 4px solid #ffb3d1;
+            animation: float 3s ease-in-out infinite;
+            /* Prevents gray tap highlight on mobile */
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* When pressed */
+        .kitty-button.pressed {
+            transform: translateY(8px) scale(0.95);
+            box-shadow: 0 2px 0 #f0f0f0;
+            animation: none;
+        }
+
+        /* Kitty Face Features */
+        .bow {
+            position: absolute;
+            top: 5px; right: 15px;
+            width: 45px; height: 30px;
+            background: #ff0044;
+            border-radius: 10px;
+            transform: rotate(20deg);
+            z-index: 2;
+        }
+        .bow::after {
+            content: '';
+            position: absolute;
+            top: 8px; left: 15px;
+            width: 12px; height: 12px;
+            background: #cc0036;
+            border-radius: 50%;
+        }
+
+        .eye {
+            position: absolute;
+            top: 65px;
+            width: 10px; height: 15px;
+            background: #222;
+            border-radius: 50%;
+        }
+        .left { left: 40px; }
+        .right { right: 40px; }
+
+        .nose {
+            position: absolute;
+            top: 85px; left: 50%;
+            transform: translateX(-50%);
+            width: 12px; height: 8px;
+            background: #ffdb58;
+            border-radius: 50%;
+        }
+
+        /* Modal / Pop-up */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 182, 193, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: white;
+            padding: 25px;
+            border-radius: 25px;
+            border: 5px solid #ff4d94;
+            width: 80%;
+            max-width: 320px;
+            max-height: 70vh; 
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #overlay.show .modal { transform: scale(1); }
+
+        .message-content {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: #444;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            padding-right: 5px;
+            max-height: 200px;
+            /* Smooth scrolling for iOS */
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        /* Custom Scrollbar */
+        .message-content::-webkit-scrollbar { width: 5px; }
+        .message-content::-webkit-scrollbar-thumb { background: #ffb3d1; border-radius: 10px; }
+
+        .close-btn {
+            background: #ff4d94;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .close-btn:disabled {
+            background: #ddd;
+            color: #888;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .hint { color: #ff80ab; margin-top: 20px; font-size: 0.85rem; padding: 0 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1 class="title">Hello Bestie! 🎀</h1>
+        <div class="counter-container">
+            Clicks: <span id="score">0</span>
+        </div>
+
+        <div id="clicker" class="kitty-button">
+            <div class="bow"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="nose"></div>
+        </div>
+
+        <p class="hint">Tap Kitty to see my messages for you...</p>
+    </div>
+
+    <div id="overlay">
+        <div class="modal">
+            <div class="message-content">
+                <p id="message-text"></p>
+            </div>
+            <button id="close-btn" class="close-btn" onclick="closeModal()" disabled>Wait... (2s)</button>
+        </div>
+    </div>
+
+    <script>
+        let count = 0;
+        const scoreDisplay = document.getElementById('score');
+        const clicker = document.getElementById('clicker');
+        const overlay = document.getElementById('overlay');
+        const messageText = document.getElementById('message-text');
+        const closeBtn = document.getElementById('close-btn');
+
+        const notes = {
+            100: "Each click is a reminder of the day we met. My life got 10x better the moment you became my bestie! 🎀",
+            200: "I'm sitting here missing your energy. No one makes me laugh as hard as you do. Come back soon! 🌸",
+            300: "100 clicks! Just like this game, you've changed my world piece by piece. I'm so lucky to have you. ✨",
+            400: "Sometimes I look at my phone and wish you were right next to me. I miss our random adventures so much! 💖",
+            500: "You're more than a friend; you're my safe space. Thank you for always listening and being YOU. 🏠💕",
+            600: "400 clicks! Just like this number, my appreciation for you keeps growing. You're truly one of a kind! 🌟",
+            1000: "500 CLICKS! You've officially reached the end, but my love for you has no limit. You've changed my life forever, bestie! 🍎🎀"
+        };
+
+        // Function to handle the actual "Click" logic
+        function handleAction(e) {
+            e.preventDefault(); // Prevents ghost clicks and zooming
+            
+            // Add visual "pressed" effect
+            clicker.classList.add('pressed');
+            setTimeout(() => clicker.classList.remove('pressed'), 100);
+
+            count++;
+            scoreDisplay.innerText = count;
+
+            if (notes[count]) {
+                showPopUp(notes[count]);
+            }
+        }
+
+        // Use touchstart for faster response on phones, click as fallback
+        clicker.addEventListener('touchstart', handleAction, {passive: false});
+        clicker.addEventListener('mousedown', (e) => {
+            if (e.type === 'mousedown' && !('ontouchstart' in window)) {
+                handleAction(e);
+            }
+        });
+
+        function showPopUp(text) {
+            messageText.innerText = text;
+            overlay.classList.add('show');
+            
+            let timeLeft = 2;
+            closeBtn.disabled = true;
+            closeBtn.innerText = `Wait... (${timeLeft}s)`;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    closeBtn.innerText = `Wait... (${timeLeft}s)`;
+                } else {
+                    clearInterval(timer);
+                    closeBtn.disabled = false;
+                    closeBtn.innerText = "Keep Clicking! 💖";
+                }
+            }, 1000);
+        }
+
+        function closeModal() {
+            if (!closeBtn.disabled) {
+                overlay.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>
