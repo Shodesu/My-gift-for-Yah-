@@ -227,6 +227,9 @@
     <audio id="click-sound">
         <source src="tap.mp3" type="audio/mpeg">
     </audio>
+    <audio id="milestone-sound">
+    <source src="milestone.mp4" type="audio/mpeg">
+</audio>
 
     <div class="game-container">
         <h1 class="title">Hello Bae! 🎀</h1>
@@ -280,14 +283,15 @@
         const bgMusic = document.getElementById('bg-music');
         const clickSound = document.getElementById('click-sound');
         const progressBar = document.getElementById('progress-fill');
+        const milestoneSound = document.getElementById('milestone-sound');
 
         bgMusic.volume = 0.4;
         clickSound.volume = 0.5;
         scoreDisplay.innerText = count;
 
-        const milestones = [50, 100, 200, 300, 400, 500, 600, 800, 1000, 1500, 2000];
+        const milestones = [1, 100, 200, 300, 400, 500, 600, 800, 1000, 1500, 2000];
          const notes = {
-            50:"Hey Bae! 💖\n\nI just wanted to say thank you for being such an amazing friend. Your presence in my life brings so much joy and happiness. I hope this little game brings a smile to your face, just like you do to mine every day! Keep clicking and let's make more memories together! 🎀",
+            1:"Hey Bae! 💖\n\nI just wanted to say thank you for being such an amazing person. Your presence in my life brings so much joy and happiness. I hope this little game brings a smile to your face, just like you do to mine every day! Keep clicking and unfold all the messages hidden in every milestones...ehe! 🎀",
             100: "Heeeeyy! Hahahaha sooo you are playing the game already....uhhh what can u say about it? Is it fun? U see I originally wanted to create a ragebait game for you as a gift...like u will click it but then it will suddenly restart...or something like that...hwhaahaha...not funny right? I wanted to level things up...instead of just giving you something...i decided to create something for you instead...i wanted to show you how much I appreciate, love your presense...and everything about you...i thought that maybe...if i exert tons of effort in creating this...i would be able to show you how much you mean to me...but then again...i dont think a game can express everything i feel for you...but still...i hope you like it! 💖",
             200: "200?! Wow, you're really going at it! Just like in our friendship, every click brings us closer. Thank you for being such an amazing part of my life! But hey, I really miss our relentless banter sessions, our early night talks (about some random stuffs), but it seems like you are really really really busy nowadays, and well...Really I just miss you....I hope we can find time to catch up soon, okay?",
             300: "I don't usually say this to you...but u see when we play ml or games together...I really enjoy those moments...even tho we dont really win that much hahahaha...but still...those times are really special to me...I cherish those times a lot...I hope we can have more of those moments again...just you and me, having fun and goofing around like we always do!...oh....I also realized something...I usually blame someone when we lose right? Not admitting the mistakes that i did...actually its my way of, u know keeping the conversation alive (i am afraid...that if i dont do that...everything would just..stop)...its my way of goofing around...but really...im sorry if i sometimes go overboard with it...i just want to keep the conversation alive...I really enjoyed those games...win or lose...its really fun playing with you...💖",
@@ -333,7 +337,7 @@
             heart.style.left = (x || window.innerWidth/2) + 'px';
             heart.style.top = (y || window.innerHeight/2) + 'px';
             document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 1000);
+            setTimeout(() => heart.remove(), 2000);
         }
 
         function updateProgress() {
@@ -353,48 +357,58 @@
         }
 
         function toggleMute() {
-            isMuted = !isMuted;
-            bgMusic.muted = isMuted;
-            clickSound.muted = isMuted;
-            document.querySelector('.circle-btn').innerText = isMuted ? "🔇" : "🔊";
+    isMuted = !isMuted;
+    bgMusic.muted = isMuted;
+    milestoneSound.muted = isMuted; // Added this line
+    document.querySelector('.circle-btn').innerText = isMuted ? "🔇" : "🔊";
+}
+
+       function handleAction(e) {
+    if(e) e.preventDefault(); 
+    if (isWaiting) return;
+    isWaiting = true;
+
+    const touch = e.touches ? e.touches[0] : e;
+    createHeart(touch.clientX, touch.clientY);
+
+    clickSound.currentTime = 0; 
+    clickSound.play().catch(()=>{});
+    if (navigator.vibrate) navigator.vibrate(20);
+
+    clicker.classList.add('pressed');
+    setTimeout(() => {
+        clicker.classList.remove('pressed');
+        isWaiting = false;
+    }, 300);
+
+    count++;
+    scoreDisplay.innerText = count;
+    
+    localStorage.setItem('bestieClicks', count);
+    updateProgress();
+
+    if (notes[count]) {
+        // --- FIXED AUDIO LOGIC ---
+        // We set currentTime to 0 so it plays from the very start
+        milestoneSound.currentTime = 0; 
+        
+        // Play the sound and handle potential browser blocks
+        milestoneSound.play().then(() => {
+            console.log("Milestone sound playing!");
+        }).catch(e => {
+            console.log("Audio play blocked by browser. This usually happens if the user hasn't clicked anything yet.");
+        });
+
+        shootConfetti();
+
+        if (!unlockedNotes.some(n => n.count === count)) {
+            unlockedNotes.push({count: count, text: notes[count]});
+            localStorage.setItem('unlockedMemories', JSON.stringify(unlockedNotes));
         }
 
-        function handleAction(e) {
-            if(e) e.preventDefault(); 
-            if (isWaiting) return;
-            isWaiting = true;
-
-            const touch = e.touches ? e.touches[0] : e;
-            createHeart(touch.clientX, touch.clientY);
-
-            clickSound.currentTime = 0; 
-            clickSound.play().catch(()=>{});
-            if (navigator.vibrate) navigator.vibrate(20);
-
-            clicker.classList.add('pressed');
-            setTimeout(() => {
-                clicker.classList.remove('pressed');
-                isWaiting = false;
-            }, 300);
-
-            count++;
-            scoreDisplay.innerText = count;
-            
-            // Save state
-            localStorage.setItem('bestieClicks', count);
-            
-            updateProgress();
-
-            if (notes[count]) {
-                if (!unlockedNotes.some(n => n.count === count)) {
-                    unlockedNotes.push({count: count, text: notes[count]});
-                    localStorage.setItem('unlockedMemories', JSON.stringify(unlockedNotes));
-                }
-                if(count === 1000) shootConfetti();
-                showPopUp(notes[count]);
-            }
-        }
-
+        showPopUp(notes[count]);
+    }
+}
         function showPopUp(text) {
             messageText.innerText = text;
             overlay.style.display = 'flex';
